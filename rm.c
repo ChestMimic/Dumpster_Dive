@@ -36,6 +36,24 @@ char *getTrashWithTarget(char* dir, char* file){
 	strcat(loc, dir);
 	strcat(loc, "/");
 	strcat(loc, direct);
+	//look for matching trashed files
+	int i = 0;
+	
+	while(!access(loc, F_OK)){
+		if(i != 0){
+			char* appended = (char*) malloc(sizeof(char)*10);
+			sprintf(appended, ".%i", i);
+			int j = strlen(appended);
+			int len = strlen(loc);
+			loc[len-j] = 0;//truncate
+			//remove the last piece
+		}
+		i++;
+		char* dst = (char*) malloc(sizeof(char)*10);
+		sprintf(dst, ".%i", i);
+		strcat(loc, dst);
+		
+	}
 	return loc;
 }
 
@@ -49,8 +67,8 @@ int main(int argc, char* argv[]){
 			char* bin = getTrash(); 	//Confirm TRASH variable is set, and place it in a string
 			if(!access(bin, F_OK)){		//Confirm TRASH variable doesn't point to junk
 				char* dest = getTrashWithTarget(bin, argv[1]);
-				link(argv[1], dest);
-				unlink(argv[1]);
+				link(argv[1], dest);	//Create file in trash
+				unlink(argv[1]);		//destroy pointed to link
 			}
 			else{
 				perror("TRASH variable directory does not exist");
