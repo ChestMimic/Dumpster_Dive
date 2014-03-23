@@ -10,6 +10,9 @@
 #include <sys/stat.h>		
 #include <unistd.h>
 #include <libgen.h> //Basename & dirname
+#include <utime.h>		
+
+
 
 char *getTrash(); //retrieve the trash directory as set by the environment
 char *getTrashWithTarget(char* dir, char* file);
@@ -54,27 +57,70 @@ char *getTrashWithTarget(char* dir, char* file){
 		strcat(loc, dst);
 		
 	}
+	printf("%s\n", loc);
 	return loc;
 }
 
 int main(int argc, char* argv[]){
-	if(argc < 2){
-		printf("Useage: rm <filename>\n");
+	int c;
+	int fcounter = 0, hcounter = 0, rcounter = 0;
+	int fileArgPos = argc-1; //position of file to be removed in arguments should be last
+	
+	//get all options
+	while((c = getopt(argc, argv, ":fhr")) != -1){
+		switch(c) {
+			case 'f' :
+				printf("Force is set.\n");
+				fcounter++;
+				break;
+			case 'h' :
+				hcounter++;
+				break;
+			case 'r' :
+				printf("Recursive is set\n");
+				rcounter++;
+				break;
+			case '?' :
+				perror("Getopt error.");
+				break;
+			
+		}
+	}
+
+
+	if(argc < 2 ){
+		printf("Usage: rm (-f:-h:-r) <filename>\n");
+		exit(1);
 	}
 	else{
+		if(hcounter){
+			printf("Usage: rm (-f:-h:-r) <filename>\n");
+		}
+		char* filename = argv[fileArgPos];
+		struct stat  buf;
+		
+		struct utimbuf  puttime;
+		
+		/*
+		
+		*/
 		//confirm file exists
-		if(!access(argv[1], F_OK)){	//only checks if file exists (success on access() returns 0)
+		if(!access(filename, F_OK)){	//only checks if file exists (success on access() returns 0)
 			char* bin = getTrash(); 	//Confirm TRASH variable is set, and place it in a string
-			if(!access(bin, F_OK)){		//Confirm TRASH variable doesn't point to junk
-				char* dest = getTrashWithTarget(bin, argv[1]);
-				link(argv[1], dest);	//Create file in trash
-				unlink(argv[1]);		//destroy pointed to link
-			}
-			else{
-				perror("TRASH variable directory does not exist");
-				exit(1);
+			if(access(bin, F_OK)){		//Confirm TRASH variable doesn't point to nothing
+				mkdir(bin, 0777);
 			}
 			
+			if(!(fcounter > 0)){ //if force is set, just do a normal delete
+				char* dest = getTrashWithTarget(bin, filename);
+				link(filename, dest);	//Create file in trash
+				
+				stat(filename, &buf);
+				puttime.actime = buf.st_atime;
+				puttime.modtime = buf.st_mtime;
+				utime(dest, &puttime);
+			}
+			unlink(filename);		//destroy pointed to link
 		}
 		else{
 			perror("Given file does not exist or cannot be accessed.");
