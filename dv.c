@@ -29,17 +29,11 @@ int main(int argc, char* argv[]){
 	//get all options
 	while((c = getopt(argc, argv, ":fhr")) != -1){
 		switch(c) {
-			case 'f' :
-				printf("Force is set.\n");
-				fcounter = 1;
-				break;
+		
 			case 'h' :
 				hcounter = 1;
 				break;
-			case 'r' :
-				printf("Recursive is set\n");
-				rcounter = 1;
-				break;
+			
 			case '?' :
 				perror("Getopt error.");
 				break;
@@ -64,7 +58,7 @@ int main(int argc, char* argv[]){
 		char* endZone = getcwd(NULL, 0);
 		chdir(bin);
 		//confirm file exists
-		moveFile(filename, bin, fcounter, rcounter);
+		moveFile(filename, endZone, 0, 1);
 	
 		
 	
