@@ -147,6 +147,3 @@ void moveFile(char* filename, char* dest, int force, int recurse){
 	
 }
 
-void printUseMessage(){
-	printf("Usage: rm (-f:-h:-r) <filename>\n");
-}

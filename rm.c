@@ -17,7 +17,9 @@
 
 
 
-
+void printUseMessage(){
+	printf("Usage: rm (-f:-h:-r) <filename>\n");
+}
 
 int main(int argc, char* argv[]){
 	int c;
