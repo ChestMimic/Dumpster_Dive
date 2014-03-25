@@ -39,7 +39,7 @@ char *getTrashWithTarget(char* dir, char* file){
 	int i = 0;
 	
 	if(access(dir, F_OK)){		//Confirm TRASH variable doesn't point to nothing
-		printf("Making directory %s\n", dir);
+		
 		mkdir(dir, 0777);
 	}
 	
@@ -115,7 +115,6 @@ void moveFile(char* filename, char* dest, int force, int recurse){
 				d = readdir(dp);
 				
 				while(d){
-					printf("%s/%s\n", destination, filename);
 					if(strcmp(d->d_name, ".") && strcmp(d->d_name, "..")){
 					
 						chdir(filename);
@@ -143,7 +142,6 @@ void moveFile(char* filename, char* dest, int force, int recurse){
 		exit(1);
 	}
 
-	printf("Name will be %s/%s\n", dest, filename);
 	
 }
 
