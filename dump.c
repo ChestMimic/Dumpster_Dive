@@ -162,7 +162,7 @@ int main(int argc, char* argv[]){
 		if(hcounter){
 			printUseMessage();
 		}
-		char* filename = argv[fileArgPos];
+		//char* filename = argv[fileArgPos];
 		struct stat  buf;
 		
 		struct utimbuf  puttime;
