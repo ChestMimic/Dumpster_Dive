@@ -11,11 +11,14 @@
 #include <unistd.h>
 #include <libgen.h> //Basename & dirname
 #include <utime.h>		
+#include <dirent.h>
 
 
 
 char *getTrash(); //retrieve the trash directory as set by the environment
 char *getTrashWithTarget(char* dir, char* file);
+void moveFile(char* filename, char* dest, int force, int recurse);
+	void printUseMessage();
 
 char *getTrash(){
 	extern char **environ;	/* externally declared */
@@ -43,6 +46,7 @@ char *getTrashWithTarget(char* dir, char* file){
 	int i = 0;
 	
 	while(!access(loc, F_OK)){
+		
 		if(i != 0){
 			char* appended = (char*) malloc(sizeof(char)*10);
 			sprintf(appended, ".%i", i);
@@ -57,8 +61,97 @@ char *getTrashWithTarget(char* dir, char* file){
 		strcat(loc, dst);
 		
 	}
-	printf("%s\n", loc);
+	
 	return loc;
+}
+
+void moveFile(char* filename, char* dest, int force, int recurse){
+	struct stat  buf;
+		
+	struct utimbuf  puttime;
+	char* destination = getTrashWithTarget(dest, filename);//Perform getname
+	
+	if(access(destination, F_OK)){		//Confirm TRASH variable doesn't point to nothing
+		mkdir(destination, 0777);
+	}
+	
+	//Is filename directory? Yes/No
+	//Yes:
+	
+		
+	
+		//Is Empty? Yes/No
+		//Yes:
+		//Trash next file appropriatley
+		//No:
+		//Recursive call to moveFIle()
+	//No:
+	//Move file
+	if(!access(filename, F_OK)){
+		if(stat(filename, &buf) != 0){
+			perror("Stat failed.");
+			exit(1);
+		}
+				
+		if(S_ISREG(buf.st_mode)){ //recieved file is not a directory
+			if(!force){
+			
+				link(filename, destination);	//Create file in trash
+				puttime.actime = buf.st_atime;
+				puttime.modtime = buf.st_mtime;
+				utime(destination, &puttime);
+			}
+			
+			unlink(filename);
+		}
+		else{
+			if(recurse == 1){
+				//go into directory, moveFile()
+				DIR *dp;
+				struct dirent *d;
+				
+				dp = opendir(filename);
+				if (dp == NULL) {
+					perror("open");
+					exit(1);
+				}
+				d = readdir(dp);
+				
+				while(d){
+					printf("%s/%s\n", destination, filename);
+					if(strcmp(d->d_name, ".") && strcmp(d->d_name, "..")){
+					
+						chdir(filename);
+						moveFile(d->d_name, destination, force, recurse);
+						chdir("..");
+					}
+					d = readdir(dp);
+				}
+				closedir(dp);
+				
+				rmdir(filename);
+			}
+			else{
+			//directory
+				printf("Directory, but not recursively set\n");
+				exit(1);
+			}
+		}
+		
+		
+	}
+	else{
+		printf("%s/%s", getcwd(NULL, 0), filename);
+		perror("Given file does not exist or cannot be accessed.");
+		exit(1);
+	}
+
+	printf("Name will be %s/%s\n", dest, filename);
+	
+}
+
+void printUseMessage(){
+	printf("Usage: rm (-f:-h:-r) <filename>\n");
 }
 
 int main(int argc, char* argv[]){
@@ -71,14 +164,14 @@ int main(int argc, char* argv[]){
 		switch(c) {
 			case 'f' :
 				printf("Force is set.\n");
-				fcounter++;
+				fcounter = 1;
 				break;
 			case 'h' :
-				hcounter++;
+				hcounter = 1;
 				break;
 			case 'r' :
 				printf("Recursive is set\n");
-				rcounter++;
+				rcounter = 1;
 				break;
 			case '?' :
 				perror("Getopt error.");
@@ -89,43 +182,26 @@ int main(int argc, char* argv[]){
 
 
 	if(argc < 2 ){
-		printf("Usage: rm (-f:-h:-r) <filename>\n");
+		printUseMessage();
 		exit(1);
 	}
 	else{
 		if(hcounter){
-			printf("Usage: rm (-f:-h:-r) <filename>\n");
+			printUseMessage();
 		}
 		char* filename = argv[fileArgPos];
 		struct stat  buf;
 		
 		struct utimbuf  puttime;
-		
+		char* bin = getTrash(); 	//Confirm TRASH variable is set, and place it in a string
+			if(access(bin, F_OK)){		//Confirm TRASH variable doesn't point to nothing
+				mkdir(bin, 0777);
+			}
 		/*
 		
 		*/
 		//confirm file exists
-		if(!access(filename, F_OK)){	//only checks if file exists (success on access() returns 0)
-			char* bin = getTrash(); 	//Confirm TRASH variable is set, and place it in a string
-			if(access(bin, F_OK)){		//Confirm TRASH variable doesn't point to nothing
-				mkdir(bin, 0777);
-			}
-			
-			if(!(fcounter > 0)){ //if force is set, just do a normal delete
-				char* dest = getTrashWithTarget(bin, filename);
-				link(filename, dest);	//Create file in trash
-				
-				stat(filename, &buf);
-				puttime.actime = buf.st_atime;
-				puttime.modtime = buf.st_mtime;
-				utime(dest, &puttime);
-			}
-			unlink(filename);		//destroy pointed to link
-		}
-		else{
-			perror("Given file does not exist or cannot be accessed.");
-			exit(1);
-		}
+		moveFile(filename, bin, fcounter, rcounter);
 	
 		
 	}
