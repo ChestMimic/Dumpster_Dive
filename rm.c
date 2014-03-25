@@ -24,7 +24,7 @@ void printUseMessage(){
 int main(int argc, char* argv[]){
 	int c;
 	int fcounter = 0, hcounter = 0, rcounter = 0;
-	int fileArgPos = argc-1; //position of file to be removed in arguments should be last
+	
 	
 	//get all options
 	while((c = getopt(argc, argv, ":fhr")) != -1){
@@ -46,7 +46,9 @@ int main(int argc, char* argv[]){
 			
 		}
 	}
-
+	printf("%s\n", argv[optind]);
+	
+	int fileArgPos = optind;
 
 	if(argc < 2 ){
 		printUseMessage();
@@ -56,6 +58,8 @@ int main(int argc, char* argv[]){
 		if(hcounter){
 			printUseMessage();
 		}
+		
+		while(fileArgPos < argc){
 		char* filename = argv[fileArgPos];
 		struct stat  buf;
 		
@@ -69,8 +73,9 @@ int main(int argc, char* argv[]){
 		*/
 		//confirm file exists
 		moveFile(filename, bin, fcounter, rcounter);
-	
-		
+		fileArgPos++;
+		memset(bin, 0, sizeof(bin));
+		}
 	}
 
 }

@@ -70,7 +70,6 @@ void moveFile(char* filename, char* dest, int force, int recurse){
 	char* destination = getTrashWithTarget(dest, filename);//Perform getname
 	
 	
-	
 	//Is filename directory? Yes/No
 	//Yes:
 	
@@ -92,7 +91,45 @@ void moveFile(char* filename, char* dest, int force, int recurse){
 		if(S_ISREG(buf.st_mode)){ //recieved file is not a directory
 			if(!force){
 			
-				link(filename, destination);	//Create file in trash
+				if(link(filename, destination)){
+					perror("Link:");
+				}				//Create file in trash
+				//if link failed, perform a copy
+				if(access(destination, F_OK)){
+					
+					FILE *source, *target;
+ 
+					char ch;
+					 
+					source = fopen(filename, "r");
+					 
+					if( source == NULL ){
+					perror("Source fail");
+						printf("%s\n", filename);
+						exit(EXIT_FAILURE);
+					}
+					 
+
+					 
+					target = fopen(destination, "w");
+					 
+					if( target == NULL ){
+						  fclose(source);
+						  perror("target fail");
+						  printf("%s\n", destination);
+						  exit(EXIT_FAILURE);
+					}
+					 
+					while( ( ch = fgetc(source) ) != EOF ){
+						fputc(ch, target);
+					}
+					 
+					fclose(source);
+					fclose(target);
+					memset(source, 0, sizeof(source));
+					memset(target, 0, sizeof(target));
+				}
+				
 				puttime.actime = buf.st_atime;
 				puttime.modtime = buf.st_mtime;
 				utime(destination, &puttime);

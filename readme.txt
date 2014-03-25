@@ -27,6 +27,8 @@ RM - Remove a file
 	Directories require the -r flag to be set in order to delete sucessfully.
 	If a file in trash exists with the same name, an incremented number is appended to the backup.
 	
+	Cross-partition attempts will copy instead of link().
+	
 	NOTE: Behavior if the current working directory is the trash is not treated as normal.
 	
 DV - Recover a file
@@ -42,3 +44,8 @@ DUMP - Empty the trash
 		
 	Ensure that all prerequisites are correct before running dump
 	dump essentially functions as "rm -rf $TRASH" with an additional mkdir call to replace the trash directory
+	
+Known error:
+	Attempting to recursively remove a directory across partitions has been failing with strange memory affecting filenames. Unsure of how to fix. 
+	Only appears to happen with multiple files inside the directory. Empty directories complete sucessfully, as well as singular files. 
+	This error also seems to happen when a user attempts to delete multiple files at a time.
